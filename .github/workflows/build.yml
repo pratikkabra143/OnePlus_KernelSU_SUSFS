@@ -7,6 +7,16 @@ permissions:
 on:
   workflow_dispatch:
 
+env:
+  MODEL: OP12
+  SOC: pineapple
+  BRANCH: oneplus/sm8650
+  MANIFEST: oneplus12_v.xml
+  ANDROID_VERSION: android14
+  KERNEL_VERSION: "6.1"
+  KSUN_BRANCH: next
+  SUSFS_BRANCH: gki-android14-6.1
+
 jobs:
   build-kernel-oneplus-kernelsu-susfs:
     runs-on: ubuntu-latest
@@ -56,33 +66,32 @@ jobs:
           echo "REPO=$GITHUB_WORKSPACE/./git-repo/repo" >> $GITHUB_ENV
 
           # Set CONFIG Environment Variable
-          echo "CONFIG=OP12" >> $GITHUB_ENV
+          echo "CONFIG=${{ env.MODEL }}" >> $GITHUB_ENV
 
       - name: Clone AnyKernel3 and Other Dependencies
         run: |
           echo "Cloning AnyKernel3 and other dependencies..."
 
           ANYKERNEL_BRANCH="gki-2.0"
-          SUSFS_BRANCH="gki-android14-6.1"
 
           # Debug print the branches
           echo "Using branch for AnyKernel3: $ANYKERNEL_BRANCH"
-          echo "Using branch for SUSFS: $SUSFS_BRANCH"
+          echo "Using branch for SUSFS: ${{ env.SUSFS_BRANCH }}"
 
           # Clone repositories using the branch names
           git clone https://github.com/TheWildJames/AnyKernel3.git -b "$ANYKERNEL_BRANCH"
-          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "$SUSFS_BRANCH"
+          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "${{ env.SUSFS_BRANCH }}"
           git clone https://github.com/TheWildJames/kernel_patches.git
 
       - name: Initialize and Sync Kernel Source
         run: |
-          echo "Creating folder for configuration: OP12..."
-          mkdir -p "OP12"
-          cd "OP12"
+          echo "Creating folder for configuration: ${{ env.MODEL }}..."
+          mkdir -p "${{ env.MODEL }}"
+          cd "${{ env.MODEL }}"
 
           # Initialize and sync kernel source
           echo "Initializing and syncing kernel source..."
-          $REPO init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8650 -m oneplus12_v.xml --repo-rev=v2.16 --depth=1 --no-clone-bundle --no-tags
+          $REPO init -u https://github.com/OnePlusOSS/kernel_manifest.git -b "${{ env.BRANCH }}" -m "${{ env.MANIFEST }}" --repo-rev=v2.16 --depth=1 --no-clone-bundle --no-tags
 
           # Sync repo and apply patches
           $REPO --version
@@ -90,22 +99,22 @@ jobs:
 
       - name: Add KernelSU Next
         run: |
-          echo "Changing to configuration directory: OP12..."
-          cd "OP12/kernel_platform"
+          echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform"
+          cd "${{ env.MODEL }}/kernel_platform"
 
           echo "Adding KernelSU Next..."
 
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s next
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/${{ env.KSUN_BRANCH }}/kernel/setup.sh" | bash -s ${{ env.KSUN_BRANCH }}
 
       - name: Apply SUSFS Patches
         run: |
-          echo "Changing to configuration directory: OP12/kernel_platform"
-          cd "OP12/kernel_platform"
+          echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform"
+          cd "${{ env.MODEL }}/kernel_platform"
 
           echo "Applying SUSFS patches..."
 
           # Copy SUSFS patches
-          cp ../../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-6.1.patch ./common/
+          cp ../../susfs4ksu/kernel_patches/50_add_susfs_in_${{ env.SUSFS_BRANCH }}.patch ./common/
           cp ../../susfs4ksu/kernel_patches/fs/* ./common/fs/
           cp ../../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
 
@@ -115,7 +124,7 @@ jobs:
           susfs_version=$(grep '#define SUSFS_VERSION' ../common/include/linux/susfs.h | awk -F'"' '{print $2}')
           echo "SUSVER=$susfs_version" >> $GITHUB_ENV
           BASE_VERSION=10200
-          KSU_VERSION=$(expr $(curl -sI -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/commits?sha=next&per_page=1" | grep -Fi X-Total-Count | awk '{print $2}') + $BASE_VERSION)
+          KSU_VERSION=$(expr $(curl -sI -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/commits?sha=${{ env.KSUN_BRANCH }}&per_page=1" | grep -Fi X-Total-Count | awk '{print $2}') + $BASE_VERSION)
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
           echo "KernelSU Next Version: $KSU_VERSION"
           echo "SusFS Version: $susfs_version"
@@ -135,7 +144,7 @@ jobs:
           patch -p1 --forward < ksun_susfs_latest.patch || true
 
           cd ../common
-          patch -p1 < 50_add_susfs_in_gki-android14-6.1.patch || true
+          patch -p1 < 50_add_susfs_in_${{ env.SUSFS_BRANCH }}.patch || true
 
           if ! grep -qxF '#define CMD_SUSFS_HIDE_SUS_MNTS_FOR_ALL_PROCS 0x55561' ./include/linux/susfs_def.h; then
             curl -Ls https://raw.githubusercontent.com/fatalcoder524/kernel_patches_additional/refs/heads/main/hide_sus_mnts_for_all_procs.patch  | patch -p1 -F 3
@@ -143,7 +152,7 @@ jobs:
             echo "Line already present. Skipping SUSFS_HIDE_SUS_MNTS_FOR_ALL_PROCS Patch."
           fi
 
-          KERNEL_VERSION="6.1"
+          KERNEL_VERSION="${{ env.KERNEL_VERSION }}"
           MIN_VERSION="5.16"
           if [ "$(printf '%s\n' "$KERNEL_VERSION" "$MIN_VERSION" | sort -V | head -n1)" = "$KERNEL_VERSION" ]; then
             echo "Patching ptrace!"
@@ -154,24 +163,24 @@ jobs:
 
       - name: Apply KSUN Hooks
         run: |
-          echo "Changing to configuration directory: OP12/kernel_platform/common"
-          cd "OP12/kernel_platform/common"
+          echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform/common"
+          cd "${{ env.MODEL }}/kernel_platform/common"
           echo "Applying KSUN Hooks..."
           cp ../../../kernel_patches/next/scope_min_manual_hooks_v1.4.patch ./manual_hooks.patch
           patch -p1 --fuzz=3 < ./manual_hooks.patch
 
       - name: Apply Hide Stuff Patches
         run: |
-          echo "Changing to configuration directory: OP12/kernel_platform/common"
-          cd "OP12/kernel_platform/common"
+          echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform/common"
+          cd "${{ env.MODEL }}/kernel_platform/common"
           # Apply additional patch
           cp ../../../kernel_patches/69_hide_stuff.patch ./
           patch -p1 -F 3 < 69_hide_stuff.patch
 
       - name: Add KernelSU-Next and SUSFS Configuration Settings
         run: |
-          echo "Changing to configuration directory: OP12/kernel_platform"
-          cd "OP12/kernel_platform"
+          echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform"
+          cd "${{ env.MODEL }}/kernel_platform"
 
           echo "Adding configuration settings to gki_defconfig..."
 
@@ -203,8 +212,8 @@ jobs:
 
       - name: Add BBR Support
         run: |
-          echo "Changing to configuration directory: OP12/kernel_platform"
-          cd "OP12/kernel_platform"
+          echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform"
+          cd "${{ env.MODEL }}/kernel_platform"
 
           echo "Adding configuration settings to gki_defconfig..."
           echo "CONFIG_TCP_CONG_ADVANCED=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -217,8 +226,8 @@ jobs:
 
       - name: Add TTL Target Support
         run: |
-          echo "Changing to configuration directory: OP12/kernel_platform"
-          cd "OP12/kernel_platform"
+          echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform"
+          cd "${{ env.MODEL }}/kernel_platform"
 
           echo "Adding configuration settings to gki_defconfig..."
           echo "CONFIG_IP_NF_TARGET_TTL=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -227,8 +236,8 @@ jobs:
 
       - name: Run sed and perl Commands
         run: |
-          echo "Changing to configuration directory: OP12/kernel_platform"
-          cd "OP12/kernel_platform"
+          echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform"
+          cd "${{ env.MODEL }}/kernel_platform"
 
           echo "Running sed commands..."
 
@@ -264,8 +273,8 @@ jobs:
 
       - name: Build the Kernel
         run: |
-          echo "Changing to configuration directory: OP12..."
-          cd "OP12"
+          echo "Changing to configuration directory: ${{ env.MODEL }}"
+          cd "${{ env.MODEL }}"
 
           echo "Building the kernel..."
           # Clear Cache
@@ -293,16 +302,16 @@ jobs:
           trap "kill $MONITOR_PID" EXIT
 
           if [ -f ./kernel_platform/build_with_bazel.py ]; then
-            ./kernel_platform/oplus/bazel/oplus_modules_variant.sh pineapple "$BUILD_TYPE" ""
-            ./kernel_platform/build_with_bazel.py -t pineapple $BUILD_TYPE "${BAZEL_ARGS[@]}" -o "$(pwd)/out"
+            ./kernel_platform/oplus/bazel/oplus_modules_variant.sh ${{ env.SOC }} "$BUILD_TYPE" ""
+            ./kernel_platform/build_with_bazel.py -t ${{ env.SOC }} $BUILD_TYPE "${BAZEL_ARGS[@]}" -o "$(pwd)/out"
           else
-            LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh pineapple "$BUILD_TYPE"
+            LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ env.SOC }} "$BUILD_TYPE"
           fi
 
       - name: Create ZIP Files for Different Formats
         run: |
-          echo "Changing to configuration directory: OP12..."
-          cd "OP12"
+          echo "Changing to configuration directory: ${{ env.MODEL }}"
+          cd "${{ env.MODEL }}"
 
           echo "Copying Image"
           cp ./out/dist/Image ../AnyKernel3/Image
@@ -311,13 +320,13 @@ jobs:
           cd ../AnyKernel3
 
           # Zip the files in the AnyKernel3 directory with a new naming convention
-          ZIP_NAME="AnyKernel3_OP12_android14-6.1_Next_${KSUVER}_SUSFS_${SUSVER}.zip"
+          ZIP_NAME="AnyKernel3_${{ env.MODEL }}_${{ env.ANDROID_VERSION }}-${{ env.KERNEL_VERSION }}_Next_${KSUVER}_SUSFS_${SUSVER}.zip"
           echo "Creating zip file $ZIP_NAME..."
           zip -r "../$ZIP_NAME" ./*
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: kernel-OP12
+          name: kernel-${{ env.MODEL }}
           path: |
             *.zip
