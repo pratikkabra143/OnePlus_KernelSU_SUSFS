@@ -57,6 +57,12 @@ jobs:
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "${{ env.SUSFS_BRANCH }}"
           git clone https://github.com/TheWildJames/kernel_patches.git
 
+      - name: Cache repo sync
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.MODEL }}/.repo
+          key: ${{ runner.os }}-repo-${{ env.BRANCH }}-${{ env.MANIFEST }}
+
       - name: Initialize and Sync Kernel Source
         run: |
           echo "Creating folder for configuration: ${{ env.MODEL }}..."
