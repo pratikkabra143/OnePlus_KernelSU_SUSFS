@@ -234,6 +234,11 @@ jobs:
           echo "CONFIG_IP6_NF_TARGET_HL=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_IP6_NF_MATCH_HL=y" >> ./common/arch/arm64/configs/gki_defconfig
 
+      - name: Set Local Kernel Version Suffix
+        run: |
+          sed -i '/^CONFIG_LOCALVERSION=/d' ./common/arch/arm64/configs/gki_defconfig
+          echo 'CONFIG_LOCALVERSION="-pratikkabra143"' >> ./common/arch/arm64/configs/gki_defconfig
+
       - name: Run sed and perl Commands
         run: |
           echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform"
