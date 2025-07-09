@@ -24,76 +24,79 @@ jobs:
     steps:
       - name: Setup Build System
         run: |
+          set -e
           export DEBIAN_FRONTEND=noninteractive
           echo "DEBIAN_FRONTEND=noninteractive" >> $GITHUB_ENV
 
           df -h
 
-          # Install dependencies
           echo "Installing Repo and Python"
-          sudo apt update
-          sudo apt install -y python3 python-is-python3
+          sudo apt update > /dev/null 2>&1
+          sudo apt install -y python3 python-is-python3 > /dev/null 2>&1
 
           mkdir -p ./git-repo
           curl -sSL https://storage.googleapis.com/git-repo-downloads/repo > ./git-repo/repo
           chmod a+rx ./git-repo/repo
           echo "REPO=$GITHUB_WORKSPACE/./git-repo/repo" >> $GITHUB_ENV
 
-          # Set CONFIG Environment Variable
           echo "CONFIG=${{ env.MODEL }}" >> $GITHUB_ENV
 
       - name: Clone AnyKernel3 and Other Dependencies
         run: |
+          set -e
           echo "Cloning AnyKernel3 and other dependencies..."
 
           ANYKERNEL_BRANCH="gki-2.0"
 
-          # Debug print the branches
           echo "Using branch for AnyKernel3: $ANYKERNEL_BRANCH"
           echo "Using branch for SUSFS: ${{ env.SUSFS_BRANCH }}"
 
-          # Clone repositories using the branch names
-          git clone https://github.com/TheWildJames/AnyKernel3.git -b "$ANYKERNEL_BRANCH"
-          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "${{ env.SUSFS_BRANCH }}"
-          git clone https://github.com/TheWildJames/kernel_patches.git
+          git clone --depth=1 https://github.com/TheWildJames/AnyKernel3.git -b "$ANYKERNEL_BRANCH" > /dev/null 2>&1
+          git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git -b "${{ env.SUSFS_BRANCH }}" > /dev/null 2>&1
+          git clone --depth=1 https://github.com/TheWildJames/kernel_patches.git > /dev/null 2>&1
 
       - name: Cache repo sync
         uses: actions/cache@v4
         with:
-          path: ${{ env.MODEL }}/.repo
+          path: .repo
           key: ${{ runner.os }}-repo-${{ env.BRANCH }}-${{ env.MANIFEST }}
+          restore-keys: |
+            ${{ runner.os }}-repo-${{ env.BRANCH }}-
+            ${{ runner.os }}-repo-
+
+      # Toolchain cache placeholder (uncomment and adjust if you ever need it)
+      # - name: Cache toolchain
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: path/to/your/toolchain
+      #     key: ${{ runner.os }}-toolchain-${{ hashFiles('path/to/toolchain/**') }}
 
       - name: Initialize and Sync Kernel Source
         run: |
-          echo "Creating folder for configuration: ${{ env.MODEL }}..."
+          set -e
           mkdir -p "${{ env.MODEL }}"
-          cd "${{ env.MODEL }}"
-
-          # Initialize and sync kernel source
           echo "Initializing and syncing kernel source..."
-          $REPO init -u https://github.com/OnePlusOSS/kernel_manifest.git -b "${{ env.BRANCH }}" -m "${{ env.MANIFEST }}" --repo-rev=v2.16 --depth=1 --no-clone-bundle --no-tags
-
-          # Sync repo and apply patches
+          $REPO init -u https://github.com/OnePlusOSS/kernel_manifest.git -b "${{ env.BRANCH }}" -m "${{ env.MANIFEST }}" --repo-rev=v2.16 --depth=1 --no-clone-bundle --no-tags > /dev/null 2>&1
           $REPO --version
           $REPO --trace sync -c --no-clone-bundle --no-tags --optimized-fetch -j$(nproc --all) --fail-fast
 
       - name: Add KernelSU Next
         run: |
+          set -e
           echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform"
           cd "${{ env.MODEL }}/kernel_platform"
 
           echo "Adding KernelSU Next..."
-
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/${{ env.KSUN_BRANCH }}/kernel/setup.sh" | bash -s ${{ env.KSUN_BRANCH }}
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/${{ env.KSUN_BRANCH }}/kernel/setup.sh" | bash -s ${{ env.KSUN_BRANCH }} > /dev/null 2>&1
 
       - name: Apply SUSFS Patches
         run: |
+          set -e
           echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform"
           cd "${{ env.MODEL }}/kernel_platform"
 
           echo "Applying SUSFS patches..."
 
-          # Copy SUSFS patches
           cp ../../susfs4ksu/kernel_patches/50_add_susfs_in_${{ env.SUSFS_BRANCH }}.patch ./common/
           cp ../../susfs4ksu/kernel_patches/fs/* ./common/fs/
           cp ../../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
@@ -104,10 +107,8 @@ jobs:
           susfs_version=$(grep '#define SUSFS_VERSION' ../common/include/linux/susfs.h | awk -F'"' '{print $2}')
           echo "SUSVER=$susfs_version" >> $GITHUB_ENV
           BASE_VERSION=10200
-          KSU_VERSION=$(expr $(curl -sI -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/commits?sha=${{ env.KSUN_BRANCH }}&per_page=1" | grep -Fi X-Total-Count | awk '{print $2}') + $BASE_VERSION)
+          KSU_VERSION=$(expr $(curl -sI -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/commits?sha=${{ env.KSUN_BRANCH }}&per_page=1" | grep -iE "^etag:" | grep -oE "[0-9a-f]{40}"))
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-          echo "KernelSU Next Version: $KSU_VERSION"
-          echo "SusFS Version: $susfs_version"
 
           case "$susfs_version" in
             "v1.5.5"|"v1.5.6"|"v1.5.7")
@@ -127,7 +128,7 @@ jobs:
           patch -p1 < 50_add_susfs_in_${{ env.SUSFS_BRANCH }}.patch || true
 
           if ! grep -qxF '#define CMD_SUSFS_HIDE_SUS_MNTS_FOR_ALL_PROCS 0x55561' ./include/linux/susfs_def.h; then
-            curl -Ls https://raw.githubusercontent.com/fatalcoder524/kernel_patches_additional/refs/heads/main/hide_sus_mnts_for_all_procs.patch  | patch -p1 -F 3
+            curl -Ls https://raw.githubusercontent.com/fatalcoder524/kernel_patches_additional/refs/heads/main/hide_sus_mnts_for_all_procs.patch  | patch -p1 -F 3 > /dev/null 2>&1
           else
             echo "Line already present. Skipping SUSFS_HIDE_SUS_MNTS_FOR_ALL_PROCS Patch."
           fi
@@ -136,29 +137,31 @@ jobs:
           MIN_VERSION="5.16"
           if [ "$(printf '%s\n' "$KERNEL_VERSION" "$MIN_VERSION" | sort -V | head -n1)" = "$KERNEL_VERSION" ]; then
             echo "Patching ptrace!"
-            curl -Ls https://raw.githubusercontent.com/fatalcoder524/kernel_patches_additional/refs/heads/main/ptrace.patch  | patch -p1 -F 3
+            curl -Ls https://raw.githubusercontent.com/fatalcoder524/kernel_patches_additional/refs/heads/main/ptrace.patch  | patch -p1 -F 3 > /dev/null 2>&1
           else
             echo "Kernel >= $MIN_VERSION, skipping ptrace patch"
           fi
 
       - name: Apply KSUN Hooks
         run: |
+          set -e
           echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform/common"
           cd "${{ env.MODEL }}/kernel_platform/common"
           echo "Applying KSUN Hooks..."
           cp ../../../kernel_patches/next/scope_min_manual_hooks_v1.4.patch ./manual_hooks.patch
-          patch -p1 --fuzz=3 < ./manual_hooks.patch
+          patch -p1 --fuzz=3 < ./manual_hooks.patch > /dev/null 2>&1
 
       - name: Apply Hide Stuff Patches
         run: |
+          set -e
           echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform/common"
           cd "${{ env.MODEL }}/kernel_platform/common"
-          # Apply additional patch
           cp ../../../kernel_patches/69_hide_stuff.patch ./
-          patch -p1 -F 3 < 69_hide_stuff.patch
+          patch -p1 -F 3 < 69_hide_stuff.patch > /dev/null 2>&1
 
       - name: Add KernelSU-Next and SUSFS Configuration Settings
         run: |
+          set -e
           echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform"
           cd "${{ env.MODEL }}/kernel_platform"
 
@@ -192,6 +195,7 @@ jobs:
 
       - name: Add BBR Support
         run: |
+          set -e
           echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform"
           cd "${{ env.MODEL }}/kernel_platform"
 
@@ -206,6 +210,7 @@ jobs:
 
       - name: Add TTL Target Support
         run: |
+          set -e
           echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform"
           cd "${{ env.MODEL }}/kernel_platform"
 
@@ -216,11 +221,13 @@ jobs:
 
       - name: Set Local Kernel Version Suffix
         run: |
+          set -e
           sed -i '/^CONFIG_LOCALVERSION=/d' ./common/arch/arm64/configs/gki_defconfig
           echo 'CONFIG_LOCALVERSION="-pratikkabra143"' >> ./common/arch/arm64/configs/gki_defconfig
 
       - name: Run sed and perl Commands
         run: |
+          set -e
           echo "Changing to configuration directory: ${{ env.MODEL }}/kernel_platform"
           cd "${{ env.MODEL }}/kernel_platform"
 
@@ -236,9 +243,9 @@ jobs:
           tac ./msm-kernel/scripts/setlocalversion | sed '0,/echo "\$res"/s//res=\$(echo \$res \| cut -d- -f1-2)-pratikkabra143;echo "\$res";/' | tac > ./msm-kernel/scripts/setlocalversion.tmp && mv ./msm-kernel/scripts/setlocalversion.tmp ./msm-kernel/scripts/setlocalversion
           tac ./external/dtc/scripts/setlocalversion | sed '0,/echo "\$res"/s//res=\$(echo \$res \| cut -d- -f1-2)-pratikkabra143;echo "\$res";/' | tac > ./external/dtc/scripts/setlocalversion.tmp && mv ./external/dtc/scripts/setlocalversion.tmp ./external/dtc/scripts/setlocalversion
           # For New setlocalversion Script
-          sed -i 's/echo "${KERNELVERSION}${file_localversion}${config_localversion}${LOCALVERSION}${scm_version}"/echo "${KERNELVERSION}-android14-pratikkabra143"/' ./common/scripts/setlocalversion || true
-          sed -i 's/echo "${KERNELVERSION}${file_localversion}${config_localversion}${LOCALVERSION}${scm_version}"/echo "${KERNELVERSION}-android14-pratikkabra143"/' ./msm-kernel/scripts/setlocalversion || true
-          sed -i 's/echo "${KERNELVERSION}${file_localversion}${config_localversion}${LOCALVERSION}${scm_version}"/echo "${KERNELVERSION}-android14-pratikkabra143"/' ./external/dtc/scripts/setlocalversion || true
+          sed -i 's/echo "${KERNELVERSION}${file_localversion}${config_localversion}${LOCALVERSION}${scm_version}"/echo "${KERNELVERSION}-android14-pratikkabra143"/' ./common/scripts/setlocalversion
+          sed -i 's/echo "${KERNELVERSION}${file_localversion}${config_localversion}${LOCALVERSION}${scm_version}"/echo "${KERNELVERSION}-android14-pratikkabra143"/' ./msm-kernel/scripts/setlocalversion
+          sed -i 's/echo "${KERNELVERSION}${file_localversion}${config_localversion}${LOCALVERSION}${scm_version}"/echo "${KERNELVERSION}-android14-pratikkabra143"/' ./external/dtc/scripts/setlocalversion
           chmod +x ./common/scripts/setlocalversion
           chmod +x ./msm-kernel/scripts/setlocalversion
           chmod +x ./external/dtc/scripts/setlocalversion
@@ -258,6 +265,7 @@ jobs:
 
       - name: Build the Kernel
         run: |
+          set -e
           echo "Changing to configuration directory: ${{ env.MODEL }}"
           cd "${{ env.MODEL }}"
 
@@ -271,23 +279,24 @@ jobs:
           BUILD_TYPE="gki"
           BAZEL_ARGS=(--jobs=$(nproc --all) --lto=thin)
 
-          (stdbuf -oL bash -c '
-            while true; do
-              echo "=== $(date) ==="
-              free -h
-              echo "======"
-              df -h
-              echo "======"
-              top -b -n 1 | head -n 15
-              echo ""
-              sleep 60
-            done
-          ') &
-          MONITOR_PID=$!
-          trap "kill $MONITOR_PID" EXIT
+          # Resource monitoring commented out for faster builds (enable if needed for debugging)
+          # (stdbuf -oL bash -c '
+          #   while true; do
+          #     echo "=== $(date) ==="
+          #     free -h
+          #     echo "======"
+          #     df -h
+          #     echo "======"
+          #     top -b -n 1 | head -n 15
+          #     echo ""
+          #     sleep 60
+          #   done
+          # ') &
+          # MONITOR_PID=$!
+          # trap "kill $MONITOR_PID" EXIT
 
           if [ -f ./kernel_platform/build_with_bazel.py ]; then
-            ./kernel_platform/oplus/bazel/oplus_modules_variant.sh ${{ env.SOC }} "$BUILD_TYPE" ""
+            ./kernel_platform/oplus/bazel/oplus_modules_variant.sh ${{ env.SOC }} "$BUILD_TYPE" "" > /dev/null 2>&1
             ./kernel_platform/build_with_bazel.py -t ${{ env.SOC }} $BUILD_TYPE "${BAZEL_ARGS[@]}" -o "$(pwd)/out"
           else
             LTO=thin ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ env.SOC }} "$BUILD_TYPE"
@@ -295,6 +304,7 @@ jobs:
 
       - name: Create ZIP Files for Different Formats
         run: |
+          set -e
           echo "Changing to configuration directory: ${{ env.MODEL }}"
           cd "${{ env.MODEL }}"
 
@@ -304,10 +314,18 @@ jobs:
           echo "Navigating to AnyKernel3 directory..."
           cd ../AnyKernel3
 
-          # Zip the files in the AnyKernel3 directory with a new naming convention
+          # Remove unnecessary files before zipping (micro-optimization)
+          find . -name "*.d" -delete
+          find . -name "*.o" -delete
+          find . -name "*.log" -delete
+
           ZIP_NAME="AnyKernel3_${{ env.MODEL }}_${{ env.ANDROID_VERSION }}-${{ env.KERNEL_VERSION }}_Next_${KSUVER}_SUSFS_${SUSVER}.zip"
           echo "Creating zip file $ZIP_NAME..."
-          zip -r "../$ZIP_NAME" ./*
+          zip -r "../$ZIP_NAME" ./* > /dev/null 2>&1
+
+          # Clean up all big build directories to save disk space before artifact upload
+          cd ..
+          rm -rf ${{ env.MODEL }} AnyKernel3 susfs4ksu kernel_patches
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
