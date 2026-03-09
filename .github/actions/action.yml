@@ -99,6 +99,7 @@ runs:
         lto="$OP_LTO"
         uname="$OP_UNAME"
         unicode="$OP_UNICODE"
+        zeromount="$OP_ZEROMOUNT"
         optimize='${{ inputs.optimize_level }}'
         
         errors=()
@@ -217,6 +218,12 @@ runs:
           errors+=("Input 'unicode' contains invalid characters. Allowed: 'true' or 'false'. Got: '$unicode'")
         fi
         
+        if [[ -z "$zeromount" ]]; then
+          errors+=("Input 'zeromount' cannot be empty")
+        elif [[ "$zeromount" != "true" && "$zeromount" != "false" ]]; then
+          errors+=("Input 'zeromount' contains invalid characters. Allowed: 'true' or 'false'. Got: '$zeromount'")
+        fi
+        
         case "$optimize" in
           O2|O3) ;;
           *) errors+=("optimize_level must be O2 or O3. Got: '$optimize'"); ;;
@@ -323,6 +330,7 @@ runs:
         MSM_KERNEL_DIR="$KERNEL_PLATFORM_DIR/msm-kernel"
         AK3_DIR="$GITHUB_WORKSPACE/AnyKernel3"
         KERNEL_PATCHES_DIR="$GITHUB_WORKSPACE/kernel_patches"
+        ZEROMOUNT_DIR="$GITHUB_WORKSPACE/Super-Builders"
         SUSFS_DIR="$GITHUB_WORKSPACE/susfs4ksu"
         KSU_DIR="$KERNEL_PLATFORM_DIR/KernelSU"
         KSUN_DIR="$KERNEL_PLATFORM_DIR/KernelSU-Next"
@@ -336,6 +344,7 @@ runs:
         echo "MSM_KERNEL_FOLDER=$MSM_KERNEL_DIR" >> "$GITHUB_ENV"
         echo "AK3_FOLDER=$AK3_DIR" >> "$GITHUB_ENV"
         echo "KERNEL_PATCHES_FOLDER=$KERNEL_PATCHES_DIR" >> "$GITHUB_ENV"
+        echo "ZEROMOUNT_FOLDER=$ZEROMOUNT_DIR" >> "$GITHUB_ENV"
         echo "SUSFS_FOLDER=$SUSFS_DIR" >> "$GITHUB_ENV"
         echo "KSU_FOLDER=$KSU_DIR" >> "$GITHUB_ENV"
         echo "KSUN_FOLDER=$KSUN_DIR" >> "$GITHUB_ENV"
@@ -1121,6 +1130,58 @@ runs:
         else
             patch -p1 --forward < "$KERNEL_PATCHES_FOLDER/common/unicode_bypass_fix_6.1+.patch"
         fi
+
+    - name: Apply Zeromount Support
+      shell: bash
+      if: ${{ env.OP_ZEROMOUNT == 'true' }}
+      run: |
+        set -euo pipefail
+        echo "::group::Apply Zeromount Support"
+        retry_clone() {
+          local url="$1"
+          local branch="${2:-main}"
+          local depth="${3:-1}"
+          local dir="$(basename "$url" .git)"
+          local max_attempts=3
+          local attempt=1
+          
+          # Build git clone args
+          local clone_args=(--branch "$branch")
+          if [ "$depth" != "0" ] && [ -n "$depth" ]; then
+            clone_args+=(--depth "$depth")
+          fi
+          
+          while [ $attempt -le $max_attempts ]; do
+            echo "🔄 Attempt $attempt/$max_attempts: cloning $url ($branch)${depth:+ [depth=$depth]}"
+            
+            # Clone with dynamic args
+            git clone "${clone_args[@]}" "$url" "$dir" && {
+              echo "✅ Success"
+              return 0
+            }
+            
+            echo "❌ Failed, cleaning up..."
+            rm -rf "$dir" 2>/dev/null
+            sleep $((attempt++ * 5))
+          done
+          
+          echo "💥 All attempts failed"
+          return 1
+        }
+        
+        retry_clone "https://github.com/Enginex0/Super-Builders.git" "feature/patch-restructure"
+        
+        cd "$COMMON_KERNEL_FOLDER"
+        # patch -p1 -F3 --no-backup-if-mismatch < "$ZEROMOUNT_FOLDER/$OP_ANDROID_VERSION-$OP_KERNEL_VERSION/KernelSU-Next/patches/51_enhanced_susfs-$OP_ANDROID_VERSION-$OP_KERNEL_VERSION.patch"
+        patch -p1 -F3 --no-backup-if-mismatch < "$ZEROMOUNT_FOLDER/$OP_ANDROID_VERSION-$OP_KERNEL_VERSION/KernelSU-Next/patches/60_zeromount-$OP_ANDROID_VERSION-$OP_KERNEL_VERSION.patch"
+        
+        cat >> "$COMMON_KERNEL_FOLDER/arch/arm64/configs/gki_defconfig" <<EOF
+        CONFIG_ZEROMOUNT=y
+        CONFIG_KSU_SUSFS_SUS_KSTAT_REDIRECT=n
+        CONFIG_KSU_SUSFS_UNICODE_FILTER=n
+        CONFIG_KSU_SUSFS_HIDDEN_NAME=n
+        CONFIG_KSU_SUSFS_HARDENED=n
+        EOF
 
     - name: Add Tmpfs Support
       shell: bash
