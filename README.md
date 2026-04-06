@@ -1,7 +1,174 @@
 # 📱 OnePlusOSS Kernel Tracker
-> **Last Update:** Mon Apr  6 13:22:06 UTC 2026 (UTC)
+> **Last Update:** Mon Apr  6 13:52:33 UTC 2026 (UTC)
 Daily automated report for OnePlus Kernel branches.
-### 📱 Kernel Status Report
+### 📓 Kernel Manifests Report
+<details><summary><b>kernel_manifest</b></summary>
+
+#### Branch: `oneplus/sm6375` 🔄 Updated
+* **Latest Commit:** `c76cb2c`
+| File Name | Status |
+| :--- | :--- |
+| README.md | 🆕 New |
+| oneplus_nord_ce4_lite_5g_b.xml | 🆕 New |
+| oneplus_nord_ce4_lite_5g_v.xml | 🆕 New |
+
+---
+#### Branch: `oneplus/sm7550` 🔄 Updated
+* **Latest Commit:** `eff3707`
+| File Name | Status |
+| :--- | :--- |
+| README.md | 🆕 New |
+| oneplus_nord_ce4_b.xml | 🆕 New |
+| oneplus_nord_ce4_v.xml | 🆕 New |
+
+---
+#### Branch: `oneplus/sm7635` 🔄 Updated
+* **Latest Commit:** `3f8df4b`
+| File Name | Status |
+| :--- | :--- |
+| README.md | 🆕 New |
+| oneplus_turbo_6v.xml | 🆕 New |
+
+---
+#### Branch: `oneplus/sm7675` 🔄 Updated
+* **Latest Commit:** `39d55cd`
+| File Name | Status |
+| :--- | :--- |
+| README.md | 🆕 New |
+| oneplus_ace_3v_b.xml | 🆕 New |
+| oneplus_ace_3v_v.xml | 🆕 New |
+| oneplus_nord_4_b.xml | 🆕 New |
+| oneplus_nord_4_v.xml | 🆕 New |
+
+---
+#### Branch: `oneplus/sm8450` 🔄 Updated
+* **Latest Commit:** `dad6e18`
+| File Name | Status |
+| :--- | :--- |
+| README.md | 🆕 New |
+| oneplus_10_pro_b.xml | 🆕 New |
+| oneplus_10_pro_s.xml | 🆕 New |
+| oneplus_10_pro_u.xml | 🆕 New |
+| oneplus_10_pro_v.xml | 🆕 New |
+
+---
+#### Branch: `oneplus/sm8475` 🔄 Updated
+* **Latest Commit:** `e668dc9`
+| File Name | Status |
+| :--- | :--- |
+| README.md | 🆕 New |
+| oneplus_10t_v.xml | 🆕 New |
+| oneplus_11r_b.xml | 🆕 New |
+| oneplus_11r_u.xml | 🆕 New |
+| oneplus_11r_v.xml | 🆕 New |
+| oneplus_ace2_b.xml | 🆕 New |
+| oneplus_ace2_v.xml | 🆕 New |
+| oneplus_ace_pro_v.xml | 🆕 New |
+
+---
+#### Branch: `oneplus/sm8550` 🔄 Updated
+* **Latest Commit:** `9429a78`
+| File Name | Status |
+| :--- | :--- |
+| README.md | 🆕 New |
+| oneplus_11_b.xml | 🆕 New |
+| oneplus_11_t.xml | 🆕 New |
+| oneplus_11_u.xml | 🆕 New |
+| oneplus_11_v.xml | 🆕 New |
+| oneplus_12r_b.xml | 🆕 New |
+| oneplus_12r_v.xml | 🆕 New |
+| oneplus_ace2_pro_b.xml | 🆕 New |
+| oneplus_ace2_pro_v.xml | 🆕 New |
+| oneplus_ace3_b.xml | 🆕 New |
+| oneplus_ace3_v.xml | 🆕 New |
+| oneplus_open_b.xml | 🆕 New |
+| oneplus_open_v.xml | 🆕 New |
+
+---
+#### Branch: `oneplus/sm8635` 🔄 Updated
+* **Latest Commit:** `4621f02`
+| File Name | Status |
+| :--- | :--- |
+| README.md | 🆕 New |
+| oneplus_nord_5.xml | 🆕 New |
+| oneplus_nord_5_b.xml | 🆕 New |
+
+---
+#### Branch: `oneplus/sm8650` 🔄 Updated
+* **Latest Commit:** `bf362d8`
+| File Name | Status |
+| :--- | :--- |
+| README.md | 🆕 New |
+| oneplus_12_b.xml | 🆕 New |
+| oneplus_12_u.xml | 🆕 New |
+| oneplus_12_v.xml | 🆕 New |
+| oneplus_13r.xml | 🆕 New |
+| oneplus_13r_b.xml | 🆕 New |
+| oneplus_ace3_pro.xml | 🆕 New |
+| oneplus_ace3_pro_b.xml | 🆕 New |
+| oneplus_ace3_pro_v.xml | 🆕 New |
+| oneplus_ace5.xml | 🆕 New |
+| oneplus_ace5_b.xml | 🆕 New |
+| oneplus_pad2_b.xml | 🆕 New |
+| oneplus_pad2_v.xml | 🆕 New |
+| oneplus_pad_pro.xml | 🆕 New |
+| oneplus_pad_pro_b.xml | 🆕 New |
+| oneplus_pad_pro_v.xml | 🆕 New |
+
+---
+#### Branch: `oneplus/sm8735` 🔄 Updated
+* **Latest Commit:** `43be2e5`
+| File Name | Status |
+| :--- | :--- |
+| README.md | 🆕 New |
+| oneplus_turbo_6.xml | 🆕 New |
+
+---
+#### Branch: `oneplus/sm8750` 🔄 Updated
+* **Latest Commit:** `f8e5067`
+| File Name | Status |
+| :--- | :--- |
+| JiuGeFaCai_oneplus_13_v.xml | 🆕 New |
+| JiuGeFaCai_oneplus_ace5_pro_v.xml | 🆕 New |
+| README.md | 🆕 New |
+| oneplus_13.xml | 🆕 New |
+| oneplus_13_b.xml | 🆕 New |
+| oneplus_13_global.xml | 🆕 New |
+| oneplus_13s.xml | 🆕 New |
+| oneplus_13s_b.xml | 🆕 New |
+| oneplus_13t.xml | 🆕 New |
+| oneplus_13t_b.xml | 🆕 New |
+| oneplus_ace5_pro.xml | 🆕 New |
+| oneplus_ace5_pro_b.xml | 🆕 New |
+| oneplus_ace_6.xml | 🆕 New |
+| oneplus_pad_2_pro.xml | 🆕 New |
+| oneplus_pad_2_pro_b.xml | 🆕 New |
+| oneplus_pad_3.xml | 🆕 New |
+| oneplus_pad_3_b.xml | 🆕 New |
+
+---
+#### Branch: `oneplus/sm8845` 🔄 Updated
+* **Latest Commit:** `60e801f`
+| File Name | Status |
+| :--- | :--- |
+| README.md | 🆕 New |
+| oneplus_15r.xml | 🆕 New |
+| oneplus_ace_6t.xml | 🆕 New |
+
+---
+#### Branch: `oneplus/sm8850` 🔄 Updated
+* **Latest Commit:** `d143776`
+| File Name | Status |
+| :--- | :--- |
+| README.md | 🆕 New |
+| oneplus_15.xml | 🆕 New |
+| oneplus_15t.xml | 🆕 New |
+
+---
+</details>
+
+
+### 🛠 Kernel Trees Report
 <details><summary><b>android_kernel_oneplus_sm8650</b></summary>
 
 #### Branch: `oneplus/sm8650_v_15.0.0_pad2` ✅
@@ -379,74 +546,6 @@ Daily automated report for OnePlus Kernel branches.
 * **Kernel Version:** `6.6.89`
 * **Commit SHA:** `3a3d602`
 * **Message:** Synchronize code for OnePlus PLU110_16.0.5.702(CN01)
----
-</details>
-<details><summary><b>kernel_manifest</b></summary>
-
-#### Branch: `oneplus/sm6375` ✅
-* **Kernel Version:** `N/A`
-* **Commit SHA:** `c76cb2c`
-* **Message:**  add oneplus_nord_ce4_lite_5g_b.xml
----
-#### Branch: `oneplus/sm7550` ✅
-* **Kernel Version:** `N/A`
-* **Commit SHA:** `eff3707`
-* **Message:** add oneplus_nord_ce4_b.xml (#162)
----
-#### Branch: `oneplus/sm7635` ✅
-* **Kernel Version:** `N/A`
-* **Commit SHA:** `3f8df4b`
-* **Message:** add README.md and oneplus_turbo_6v.xml
----
-#### Branch: `oneplus/sm7675` ✅
-* **Kernel Version:** `N/A`
-* **Commit SHA:** `39d55cd`
-* **Message:** add oneplus_ace_3v_b.xml and oneplus_nord_4_b.xml
----
-#### Branch: `oneplus/sm8450` ✅
-* **Kernel Version:** `N/A`
-* **Commit SHA:** `dad6e18`
-* **Message:** oneplus_10_pro_b.xml
----
-#### Branch: `oneplus/sm8475` ✅
-* **Kernel Version:** `N/A`
-* **Commit SHA:** `e668dc9`
-* **Message:** correct spelling oneplus_ace2_b (#159)
----
-#### Branch: `oneplus/sm8550` ✅
-* **Kernel Version:** `N/A`
-* **Commit SHA:** `9429a78`
-* **Message:** add oneplus_ace2_pro_b.xml
----
-#### Branch: `oneplus/sm8635` ✅
-* **Kernel Version:** `N/A`
-* **Commit SHA:** `4621f02`
-* **Message:**  add oneplus_nord_5_b.xml
----
-#### Branch: `oneplus/sm8650` ✅
-* **Kernel Version:** `N/A`
-* **Commit SHA:** `bf362d8`
-* **Message:** add oneplus_ace3_pro_b.xml,oneplus_pad_pro_b.xml,oneplus_pad2_b.xml (#157)
----
-#### Branch: `oneplus/sm8735` ✅
-* **Kernel Version:** `N/A`
-* **Commit SHA:** `43be2e5`
-* **Message:** add README.md and oneplus_turbo_6.xml
----
-#### Branch: `oneplus/sm8750` ✅
-* **Kernel Version:** `N/A`
-* **Commit SHA:** `f8e5067`
-* **Message:** add oneplus_pad_2_pro_b.xml & oneplus_pad_3_b.xml
----
-#### Branch: `oneplus/sm8845` ✅
-* **Kernel Version:** `N/A`
-* **Commit SHA:** `60e801f`
-* **Message:** add oneplus_15r.xml
----
-#### Branch: `oneplus/sm8850` ✅
-* **Kernel Version:** `N/A`
-* **Commit SHA:** `d143776`
-* **Message:** add oneplus_15t.xml
 ---
 </details>
 <details><summary><b>android_kernel_common_oneplus_sm8845</b></summary>
