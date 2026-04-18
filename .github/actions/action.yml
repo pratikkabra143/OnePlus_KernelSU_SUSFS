@@ -836,9 +836,9 @@ runs:
         echo "Adding KernelSU Next..."
         KSU_INPUT="${{ inputs.ksu_branch_or_hash }}"
         if [ -z "$KSU_INPUT" ]; then
-          curl --fail --location --proto '=https' -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
+          curl --fail --location --proto '=https' -LSs "https://raw.githubusercontent.com/pratikkabra143/KernelSU-Next/dev/kernel/setup.sh" | bash -
         else
-          curl --fail --location --proto '=https' -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s "$KSU_INPUT"
+          curl --fail --location --proto '=https' -LSs "https://raw.githubusercontent.com/pratikkabra143/KernelSU-Next/dev/kernel/setup.sh" | bash -s "$KSU_INPUT"
         fi
         git submodule update --init --recursive
         cd KernelSU-Next/kernel
@@ -996,12 +996,6 @@ runs:
               patch -p1 --forward < "$KERNEL_PATCHES_FOLDER/next/susfs_fix_patches/$susfs_version/overwrite_hook_mode.patch"
               echo "Patching KSU_TOOLKIT Support for SusFS kernel!"
               patch -p1 --forward < "$KERNEL_PATCHES_FOLDER/next/susfs_fix_patches/$susfs_version/ksu_toolkit.patch"
-              echo "Patching Multi-manager Support for SusFS kernel!"
-              patch -p1 --forward < "$KERNEL_PATCHES_FOLDER/next/susfs_fix_patches/$susfs_version/multi_manager.patch"
-              if [ "$KSUVER" -ge 33068 ] && [ "$KSUVER" -lt 33070 ]; then
-                echo "Patching Multi-manager sepolicy Support for SusFS kernel!"
-                patch -p1 --forward < "$KERNEL_PATCHES_FOLDER/next/susfs_fix_patches/$susfs_version/multi_sepolicy_fix.patch"
-              fi
             else
               cd "$KSU_FOLDER"
               patch -p1 --forward < "$SUSFS_FOLDER/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" || true
@@ -1019,14 +1013,6 @@ runs:
               patch -p1 --forward < "$KERNEL_PATCHES_FOLDER/next/susfs_fix_patches/$susfs_version/overwrite_hook_mode.patch"
               echo "Patching KSU_TOOLKIT Support for SusFS kernel!"
               patch -p1 --forward < "$KERNEL_PATCHES_FOLDER/next/susfs_fix_patches/$susfs_version/ksu_toolkit.patch"
-              if [ "$KSUVER" -le 33095 ]; then
-              echo "Patching Multi-manager Support for SusFS kernel!"
-              patch -p1 --forward < "$KERNEL_PATCHES_FOLDER/next/susfs_fix_patches/$susfs_version/multi_manager.patch"
-              fi
-              if [ "$KSUVER" -ge 33068 ] && [ "$KSUVER" -lt 33070 ]; then
-                echo "Patching Multi-manager sepolicy Support for SusFS kernel!"
-                patch -p1 --forward < "$KERNEL_PATCHES_FOLDER/next/susfs_fix_patches/$susfs_version/multi_sepolicy_fix.patch"
-              fi
             else
               cd "$KSU_FOLDER"
               patch -p1 --forward < "$SUSFS_FOLDER/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch" || true
@@ -1965,7 +1951,7 @@ runs:
           
           if [ "$KSU_SHA" != "unknown" ]; then
             if [ "${{ inputs.ksu_type }}" = "KSUN" ]; then
-              echo "| **KSUN Commit** | [\`${KSU_SHA:0:8}\`](https://github.com/KernelSU-Next/KernelSU-Next/commit/$KSU_SHA) |"
+              echo "| **KSUN Commit** | [\`${KSU_SHA:0:8}\`](https://github.com/pratikkabra143/KernelSU-Next/commit/$KSU_SHA) |"
             else
               echo "| **KSU Commit** | [\`${KSU_SHA:0:8}\`](https://github.com/tiann/KernelSU/commit/$KSU_SHA) |"
             fi
